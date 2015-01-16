@@ -1,0 +1,10 @@
+section {
+  margin: 0 auto;
+  width: 500px;
+}
+
+video {
+  border: 1px solid #000;
+  height: 240px;
+  width: 320px;
+}
