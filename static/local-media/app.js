@@ -1,20 +1,15 @@
-var myVideoStream, myVideo;
+var myVideoStream = null,
+    myVideo       = null;
 
 window.onload = function() {
     myVideo = document.getElementById('myVideo');
-    getMedia();
+    getUserMedia({audio: true, video: true}, gotUserMedia, didntGetUserMedia);
 };
 
-function getMedia() {
-    getUserMedia({audio: true, video: true}, gotUserMedia, didntGetUserMedia);
-}
-
 function gotUserMedia(stream) {
-    myVideoStream = stream;
-
-    attachMediaStream(myVideo, myVideoStream);
+    attachMediaStream(myVideo, stream);
 }
 
 function didntGetUserMedia() {
-    console.log('could not get video');
+    console.log('Could not get video');
 }
