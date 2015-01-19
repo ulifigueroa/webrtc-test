@@ -1,6 +1,6 @@
-var http = require('http');
-    url  = require('url'),
-    fs   = require('fs'),
+var http         = require('http'),
+    url          = require('url'),
+    fs           = require('fs'),
     serveFileDir = '';
 
 function setServeFilePath(p) {
@@ -11,12 +11,21 @@ exports.serveFilePath = setServeFilePath;
 
 function start(handle, port) {
     function onRequest(req, res) {
-        var urldata = url.parse(req.url, true),
+        var urldata  = url.parse(req.url, true),
             pathname = urldata.pathname,
-            info = {'res': res};
+            info     = {res: res, query: urldata.query, postData: ''};
 
         console.log('Request for' + pathname + ' received');
-        route(handle, pathname, info);
+        req.setEncoding('utf8');
+
+        req.addListener('data', function(postDataChunk) {
+            info.postData += postDataChunk;
+            console.log('Received POST data chunk ' + postDataChunk + '.');
+        });
+
+        req.addListener('end', function() {
+            route(handle, pathname, info);
+        });
     }
 
     http.createServer(onRequest).listen(port);
@@ -57,7 +66,8 @@ function createFilePath(pathname) {
 }
 
 function serveFile(filepath, info) {
-    var res = info.res;
+    var res     = info.res,
+        query   = info.query;
 
     console.log('Serving file ' + filepath);
     fs.open(filepath, 'r', function(err, fd) {
@@ -66,7 +76,9 @@ function serveFile(filepath, info) {
             noHandlerErr(filepath, res);
             return;
         }
+
         var readBuffer = new Buffer(20480);
+
         fs.read(fd, readBuffer, 0, 20480, 0, function(err, readBytes) {
             if (err) {
                 console.log(err.message);
@@ -77,7 +89,7 @@ function serveFile(filepath, info) {
             console.log('Just read ' + readBytes + 'bytes');
             if (readBytes > 0) {
                 res.writeHead(200, {'Content-Type': contentType(filepath)});
-                res.write(readBuffer.toString('utf8', 0, readBytes));
+                res.write(addQuery(readBuffer.toString('utf8', 0, readBytes), query));
             }
             res.end();
         });
@@ -98,6 +110,14 @@ function contentType(filepath) {
     }
 
     return ('text/html');
+}
+
+function addQuery(str, q) {
+    if (q) {
+        return str.replace('<script></script>', '<script>var queryparams =' + JSON.stringify(q) + ';</script>');
+    } else {
+        return str;
+    }
 }
 
 function handleCustom(handle, pathname, info) {

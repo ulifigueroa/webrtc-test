@@ -1,2 +1,2 @@
 # webrtc-test
-WebRTC Test
+WebRTC Test App

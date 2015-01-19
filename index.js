@@ -1,5 +1,7 @@
-var server  = require('./server');
-    port    = process.argv[2] || 5001;
+var port            = process.argv[2] || 5001,
+    server          = require('./server'),
+    requestHandlers = require('./serverXHRSignalingChannel'),
+    handle          = {};
 
 function fourohfour(info) {
     var res = info.res;
@@ -9,8 +11,10 @@ function fourohfour(info) {
     res.end();
 }
 
-var handle  = {};
-handle['/'] = fourohfour;
+handle['/']         = fourohfour;
+handle['/connect']  = requestHandlers.connect;
+handle['/send']     = requestHandlers.send;
+handle['/get']      = requestHandlers.get;
 
 server.serveFilePath('static');
 server.start(handle, port);
